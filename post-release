@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+APP="$1"; IMAGE="dokku/$APP"; APP_ROOT="$DOKKU_ROOT/$APP"; GPG_DIR="$APP_ROOT/gpg"
+
+if [ ! -d "$GPG_DIR" ]; then
+  exit 0
+fi
+
+KEYS=`cat $APP_ROOT/gpg/*.key`
+
+ID=$(docker run -e KEYS="$KEYS" -d $IMAGE /bin/bash -c 'echo "$KEYS" | gpg --import')
+test $(docker wait $ID) -eq 0
+docker commit $ID $IMAGE > /dev/null
