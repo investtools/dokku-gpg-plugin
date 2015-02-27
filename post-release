@@ -8,6 +8,6 @@ fi
 
 KEYS=`cat $APP_ROOT/gpg/*.key`
 
-ID=$(docker run -e KEYS="$KEYS" -d $IMAGE /bin/bash -c 'echo "$KEYS" | gpg --import')
+ID=$(docker run -e KEYS="$KEYS" -e HOME=/app -d $IMAGE /bin/bash -c 'echo "$KEYS" | gpg --import')
 test $(docker wait $ID) -eq 0
 docker commit $ID $IMAGE > /dev/null
