@@ -6,6 +6,11 @@ if [ ! -d "$GPG_DIR" ]; then
   exit 0
 fi
 
+docker run --rm $IMAGE ls /app/.gnupg/pubring.gpg &> /dev/null
+if [ $? -eq 0 ]; then
+  exit 0
+fi
+
 KEYS=`cat $APP_ROOT/gpg/*.key`
 
 ID=$(docker run -e KEYS="$KEYS" -e HOME=/app -d $IMAGE /bin/bash -c 'echo "$KEYS" | gpg --import')
