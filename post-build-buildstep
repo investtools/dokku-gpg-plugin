@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
-APP="$1"; IMAGE="dokku/$APP"; APP_ROOT="$DOKKU_ROOT/$APP"; GPG_DIR="$APP_ROOT/gpg"
+set -eo pipefail; 
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 
-if [ ! -d "$GPG_DIR" ]; then
-  exit 0
-fi
+post-build-buildstep() {
+  local APP="$1";     
+  verify_app_name "$APP"
+  local IMAGE="dokku/$APP";
+  local APP_ROOT="$DOKKU_ROOT/$APP"; 
+  local GPG_DIR="$APP_ROOT/gpg"
 
-KEYS=`cat $APP_ROOT/gpg/*.key`
+  dokku_log_info1 "Checking for post deploy script..."
 
-echo '-----> Injecting GPG keys...'
+  if [ ! -d "$GPG_DIR" ]; then
+    dokku_log_info1 "No gpg app path $GPG_DIR"
+    exit 0
+  fi
 
-APP_OWNER=$(docker run --rm -e HOME=/app $IMAGE stat -c %U /app)
-ID=$(docker run -e KEYS="$KEYS" -e HOME=/app -e APP_OWNER="$APP_OWNER" -d $IMAGE setuidgid "$APP_OWNER" /bin/bash -c 'echo "$KEYS" | gpg --import')
-test $(docker wait $ID) -eq 0
-docker commit $ID $IMAGE > /dev/null
+  KEYS=`cat $APP_ROOT/gpg/*.key`
+
+  dokku_log_info1 '-----> Injecting GPG keys...'
+
+  APP_OWNER=$(docker run --rm -e HOME=/app $IMAGE stat -c %U /app)
+  ID=$(docker run -e KEYS="$KEYS" -e HOME=/app -e APP_OWNER="$APP_OWNER" -d $IMAGE setuidgid "$APP_OWNER" /bin/bash -c 'echo "$KEYS" | gpg --import')
+  test $(docker wait $ID) -eq 0
+  local OUTPUT=$(docker commit $ID $IMAGE)
+
+  dokku_log_verbose_quiet "$OUTPUT"
+}
+
+post-build-buildstep "$@"
