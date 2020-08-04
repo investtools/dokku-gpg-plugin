@@ -3,7 +3,7 @@ set -eo pipefail;
 [[ $DOKKU_TRACE ]] && set -x
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 
-post-build-buildstep() {
+post-build-buildpack() {
   local APP="$1";     
   verify_app_name "$APP"
   local IMAGE="dokku/$APP";
@@ -29,4 +29,4 @@ post-build-buildstep() {
   dokku_log_verbose_quiet "$OUTPUT"
 }
 
-post-build-buildstep "$@"
+post-build-buildpack "$@"
