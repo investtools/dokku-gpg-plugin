@@ -13,7 +13,7 @@ post-build-buildstep() {
   dokku_log_info1 "Checking for post deploy script..."
 
   if [ ! -d "$GPG_DIR" ]; then
-    dokku_log_info1 "No gpg app path $GPG_DIR"
+    dokku_log_info1 "No gpg path in $GPG_DIR"
     exit 0
   fi
 
