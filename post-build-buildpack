@@ -10,7 +10,7 @@ post-build-buildpack() {
   local APP_ROOT="$DOKKU_ROOT/$APP"; 
   local GPG_DIR="$APP_ROOT/gpg"
 
-  dokku_log_info1 "Checking for post deploy script..."
+  dokku_log_info1 "Checking for gpg keys path..."
 
   if [ ! -d "$GPG_DIR" ]; then
     dokku_log_info1 "No gpg path in $GPG_DIR"
@@ -19,11 +19,10 @@ post-build-buildpack() {
 
   KEYS=`cat $APP_ROOT/gpg/*.key`
 
-  dokku_log_info1 '-----> Injecting GPG keys...'
+  dokku_log_info1 'Injecting GPG keys...'
 
   APP_OWNER=$(docker run --rm -e HOME=/app $IMAGE stat -c %U /app)
   ID=$(docker run -e KEYS="$KEYS" -e HOME=/app -e APP_OWNER="$APP_OWNER" -d $IMAGE setuidgid "$APP_OWNER" /bin/bash -c 'echo "$KEYS" | gpg --import')
-  test $(docker wait $ID) -eq 0
   local OUTPUT=$(docker commit $ID $IMAGE)
 
   dokku_log_verbose_quiet "$OUTPUT"
